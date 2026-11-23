@@ -14,7 +14,10 @@ export const reconcileViewTemplate = `
     <p>配额 {{ reconOne.quota_batches }} · 在批 {{ reconOne.active_batches }} · <span :class="reconOne.balanced ? 'ok' : 'bad'">{{ reconOne.balanced ? "平衡" : "失衡" }}</span></p>
   </div>
   <div v-if="proofOne" class="detail-box">
-    <p>状态 {{ proofOne.status }} · 开放游标 {{ proofOne.open_excursions }} · 温谱 {{ proofOne.spectrum_exports }}</p>
+    <p>状态 {{ proofOne.status }} · 开放游标 {{ proofOne.open_excursions }} · 温谱 {{ proofOne.spectrum_exports }} · 探头到期 {{ proofOne.probe_calibration_due }}</p>
+  </div>
+  <div v-if="reconSummary" class="detail-box">
+    <p>仓间 {{ reconSummary.total }} · 平衡 {{ reconSummary.balanced }} · 失衡 {{ reconSummary.unbalanced }} · 校准临期 {{ reconSummary.calibration_overdue }}</p>
   </div>
   <table class="data-table">
     <thead><tr><th>仓间</th><th>区域</th><th>在批</th><th>余配额</th><th>平衡</th></tr></thead>

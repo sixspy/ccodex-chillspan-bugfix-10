@@ -32,7 +32,9 @@ def list_batches(authorization: AuthHeader = None, status: str | None = None):
     with connect() as conn:
         if status:
             rows = conn.execute(
-                """SELECT b.*, c.chamber_code, p.probe_code FROM temp_batches b
+                """SELECT b.*, c.chamber_code, p.probe_code,
+                          p.calibration_due AS probe_calibration_due
+                   FROM temp_batches b
                    JOIN cold_chambers c ON c.id=b.chamber_id
                    JOIN probes p ON p.id=b.probe_id
                    WHERE b.status=? ORDER BY b.id DESC""",
@@ -40,7 +42,9 @@ def list_batches(authorization: AuthHeader = None, status: str | None = None):
             ).fetchall()
         else:
             rows = conn.execute(
-                """SELECT b.*, c.chamber_code, p.probe_code FROM temp_batches b
+                """SELECT b.*, c.chamber_code, p.probe_code,
+                          p.calibration_due AS probe_calibration_due
+                   FROM temp_batches b
                    JOIN cold_chambers c ON c.id=b.chamber_id
                    JOIN probes p ON p.id=b.probe_id
                    ORDER BY b.id DESC"""

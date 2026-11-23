@@ -60,6 +60,8 @@ class CalibrationIn(BaseModel):
     offset_c: float
     valid_until: str
     officer: str = "质检员"
+    # 单轨：仅接受「正式」登记；影子/待复核等混轨模式一律拒写
+    mode: str = "正式"
 
 
 class RouteIn(BaseModel):

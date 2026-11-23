@@ -57,6 +57,7 @@ createApp({
     const reconOne = ref(null);
     const proofOne = ref(null);
     const reconAllItems = ref([]);
+    const reconSummary = ref(null);
     const reconCode = ref("CK-HD-01");
     const proofCode = ref("TB-CK-HD-01-002");
 
@@ -95,6 +96,7 @@ createApp({
       offset_c: 0.1,
       valid_until: "2027-12-01",
       officer: "值班员",
+      mode: "正式",
     });
     const routeForm = ref({
       route_code: "RT-NEW-01",
@@ -144,6 +146,22 @@ createApp({
     }
     function probeOnlineClass(s) {
       return s === "在线" ? "pass" : "fail";
+    }
+    function probeDueClass(due) {
+      if (!due) return "frozen";
+      const today = new Date().toISOString().slice(0, 10);
+      const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      if (due < today) return "fail";
+      if (due <= soon) return "frozen";
+      return "pass";
+    }
+    function probeDueLabel(due) {
+      if (!due) return "—";
+      const today = new Date().toISOString().slice(0, 10);
+      const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      if (due < today) return "已过期";
+      if (due <= soon) return "临期";
+      return "有效";
     }
     function excursionClass(s) {
       return s === "开放" ? "fail" : "pass";
@@ -395,6 +413,7 @@ createApp({
       try {
         const r = await api.reconcile();
         reconAllItems.value = r.items || [];
+        reconSummary.value = r.summary || null;
         flashOk("全仓对账已刷新");
       } catch (e) {
         flashErr(e);
@@ -404,8 +423,10 @@ createApp({
     async function addCalibration() {
       clearFlash();
       try {
-        await api.addCalibration(calForm.value);
-        flashOk("校准记录已写入");
+        const row = await api.addCalibration(calForm.value);
+        flashOk(
+          `校准记录已写入 · 探头到期同事务回写至 ${row.calibration_due}`
+        );
         await refresh();
       } catch (e) {
         flashErr(e);
@@ -477,6 +498,7 @@ createApp({
       reconOne,
       proofOne,
       reconAllItems,
+      reconSummary,
       reconCode,
       proofCode,
       chamberForm,
@@ -501,6 +523,8 @@ createApp({
       fmtTemp,
       statusClass,
       probeOnlineClass,
+      probeDueClass,
+      probeDueLabel,
       excursionClass,
       shortText,
       createChamber,

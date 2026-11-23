@@ -10,6 +10,29 @@ from models import ProbeIn
 router = APIRouter(tags=["probes"])
 
 
+def sync_calibration_due(conn, probe_id: int, valid_until: str) -> tuple[str, str]:
+    """甲路径：同事务零改回写探头主档到期。
+
+    只由校准登记在自身事务内调用；`calibration_due` 直取 `valid_until`，
+    不做任何推导。任一步失败由调用方回滚整笔登记。
+    """
+    row = conn.execute(
+        "SELECT calibration_due FROM probes WHERE id=?", (probe_id,)
+    ).fetchone()
+    if not row:
+        raise HTTPException(404, "探头不存在")
+    previous = row["calibration_due"]
+    conn.execute(
+        "UPDATE probes SET calibration_due=? WHERE id=?", (valid_until, probe_id)
+    )
+    current = conn.execute(
+        "SELECT calibration_due FROM probes WHERE id=?", (probe_id,)
+    ).fetchone()["calibration_due"]
+    if current != valid_until:
+        raise RuntimeError("探头主档到期回写未生效，登记回滚")
+    return previous, current
+
+
 @router.get("/api/probes")
 def list_probes(authorization: AuthHeader = None, chamber_id: int | None = None):
     require_user(authorization)

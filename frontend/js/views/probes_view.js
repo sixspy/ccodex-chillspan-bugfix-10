@@ -17,7 +17,7 @@ export const probesViewTemplate = `
     <button class="secondary" @click="refresh">刷新</button>
   </div>
   <table class="data-table">
-    <thead><tr><th>编码</th><th>仓间</th><th>区域</th><th>在线</th><th>到期</th><th></th></tr></thead>
+    <thead><tr><th>编码</th><th>仓间</th><th>区域</th><th>在线</th><th>到期</th><th>临期</th><th></th></tr></thead>
     <tbody>
       <tr v-for="p in probes" :key="p.id" @click="selectProbe(p)">
         <td>{{ p.probe_code }}</td>
@@ -25,14 +25,15 @@ export const probesViewTemplate = `
         <td>{{ p.region }}</td>
         <td><span class="badge" :class="probeOnlineClass(p.online_status)">{{ p.online_status }}</span></td>
         <td>{{ p.calibration_due }}</td>
+        <td><span class="badge" :class="probeDueClass(p.calibration_due)">{{ probeDueLabel(p.calibration_due) }}</span></td>
         <td><button class="mini-btn" @click.stop="loadProbeDetail(p.id)">校准史</button></td>
       </tr>
     </tbody>
   </table>
   <div v-if="probeDetail" class="detail-box">
     <h3>探头 {{ probeDetail.probe.probe_code }}</h3>
-    <p>目标温区 {{ probeDetail.probe.target_min }}~{{ probeDetail.probe.target_max }}℃</p>
-    <ul><li v-for="c in probeDetail.calibrations" :key="c.id">{{ c.calibrated_at }} 偏移 {{ c.offset_c }}℃ 至 {{ c.valid_until }}</li></ul>
+    <p>目标温区 {{ probeDetail.probe.target_min }}~{{ probeDetail.probe.target_max }}℃ · 主档到期 {{ probeDetail.probe.calibration_due }}</p>
+    <ul><li v-for="c in probeDetail.calibrations" :key="c.id">{{ c.calibrated_at }} 偏移 {{ c.offset_c }}℃ 至 {{ c.valid_until }} · {{ c.status }}</li></ul>
   </div>
 </section>
 `;

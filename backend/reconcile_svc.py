@@ -48,12 +48,17 @@ def reconcile_all(authorization: AuthHeader = None):
         chambers = conn.execute("SELECT * FROM cold_chambers ORDER BY id").fetchall()
         items = [_chamber_recon(conn, c) for c in chambers]
         bad = [i for i in items if not i["balanced"]]
+        overdue = conn.execute(
+            """SELECT COUNT(*) c FROM probes
+               WHERE calibration_due < date('now') AND online_status!='停用'"""
+        ).fetchone()["c"]
         return {
             "items": items,
             "summary": {
                 "total": len(items),
                 "balanced": len(items) - len(bad),
                 "unbalanced": len(bad),
+                "calibration_overdue": overdue,
             },
         }
 
@@ -76,7 +81,10 @@ def batch_proof(batch_code: str, authorization: AuthHeader = None):
     require_user(authorization)
     with connect() as conn:
         batch = conn.execute(
-            "SELECT * FROM temp_batches WHERE batch_code=?", (batch_code,)
+            """SELECT b.*, p.calibration_due AS probe_calibration_due
+               FROM temp_batches b JOIN probes p ON p.id=b.probe_id
+               WHERE b.batch_code=?""",
+            (batch_code,),
         ).fetchone()
         if not batch:
             raise HTTPException(404, "批次不存在")
@@ -99,6 +107,7 @@ def batch_proof(batch_code: str, authorization: AuthHeader = None):
             "open_excursions": open_exc,
             "spectrum_exports": exports,
             "sealed": sealed,
+            "probe_calibration_due": batch["probe_calibration_due"],
             "excursion_closed": open_exc == 0,
             "spectrum_matches_seal": spectrum_ok,
             "proof": {
